@@ -1,4 +1,6 @@
-const riotKey = 'api_key=';
+import riotKey from './riotkey.js'
+
+// const riotKey = 'api_key=';
 const output = document.querySelector('#output');
 const form = document.querySelector('#sumSearch');
 const gamesOutput = document.querySelector('#gamesOutput');
@@ -10,7 +12,6 @@ const getChampionNames = function() {
   fetch('./Assets/11.5.1/data/en_US/champion.json')
   .then(response => response.json())
   .then(data => makeChampionsArray(data))
-  
 } 
 
 getChampionNames();
@@ -20,7 +21,7 @@ const makeChampionsArray = function(data) {
 }
 
  const getSummoner = function(name) {
-   fetch(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/${name}?${riotKey}`)
+   fetch(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/${name}?${riotKey()}`)
    .then(response => {
       if(response.ok)
       {return response.json()}})
@@ -28,30 +29,59 @@ const makeChampionsArray = function(data) {
      if(data !== undefined){displaySummoner(data)}
       else summonerNotFound()})
  }
- 
+
  const displaySummoner = function(data) {
   activeSummoner = data.accountId;
+  console.log(data);
   gamesOutput.innerHTML = ''
   output.innerHTML = `
-      <div class="card roundend shadow bg-dark text-light w-25">
-        <img src="./Assets/11.5.1/img/profileicon/${data.profileIconId}.png" class="card-img-top" alt="...">
-        <div class="card-body">
-          <h5 class="card-title">${data.name}</h5>
-          <p class="card-text">Level: ${data.summonerLevel}</p>
-          <button class="btn btn-light">Recent Games</button>
-        </div>
-      </div>`
+  <div class="card rounded shadow bg-dark text-light w-100">
+  <div class="card roundend shadow bg-dark text-light w-50">
+  <img src="./Assets/11.5.1/img/profileicon/${data.profileIconId}.png" class="card-img-top" alt="">
+  <div class="card-body">
+    <h5 class="card-title fs-1">${data.name}</h5>
+    <p class="card-text">Level: ${data.summonerLevel}</p>
+
+    <div id="gamesFilter" class="d-flex flex-column">
+
+      <div class="form-check">
+        <input class="form-check-input" type="radio" value="420" name="flexRadioDefault" id="flexRadioDefault1">
+        <label class="form-check-label" for="flexRadioDefault1">
+          Ranked Games
+        </label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" value="400" name="flexRadioDefault" id="flexRadioDefault2" checked>
+        <label class="form-check-label" for="flexRadioDefault2">
+          Normal Games
+        </label>
+      </div>
+
+      <div class="mb-2">
+      <label class="mt-2" for=""champion>Champion</label>
+      <select name="champion" class="form-select" aria-label="Default select example">
+      <option value='' selected>All Champions</option>
+      ${listChampions()}
+      </select>
+      </div>
+
+      <button class="btn btn-light">Recent Games</button>
+    </div>
+  </div>
+  </div>
+  </div>
+`
  }
 
- const summonerGames = function (summoner) { 
+ const summonerGames = function (summoner, gameType = '', champion = '', amount = 10) { 
    gamesOutput.innerHTML = '';
-   fetch(`https://euw1.api.riotgames.com/lol/match/v4/matchlists/by-account/${summoner}?endIndex=5&${riotKey}`)
+   fetch(`https://euw1.api.riotgames.com/lol/match/v4/matchlists/by-account/${summoner}?${champion}${gameType}&endIndex=${amount}&${riotKey()}`)
    .then(response => response.json())
    .then(data => {Object.values(data.matches).forEach(game => gameData(game.gameId))})
  }
 
 const gameData = function (gameId) {
-  fetch(`https://euw1.api.riotgames.com/lol/match/v4/matches/${gameId}?${riotKey}`)
+  fetch(`https://euw1.api.riotgames.com/lol/match/v4/matches/${gameId}?${riotKey()}`)
   .then(response => response.json())
   .then(data => displayGames(data))
 }
@@ -68,8 +98,10 @@ const gameData = function (gameId) {
       result = 'Lose'
       resultClass = 'text-danger'
     };
+
+
   
-    console.log(playerStats[0].stats);
+   
     gamesOutput.innerHTML += 
   `
   <div class="card mb-3 bg-dark text-light">
@@ -78,7 +110,7 @@ const gameData = function (gameId) {
     <div>
       <h5 class="card-title h2">${champion.name} / ${playerStats[0].timeline.lane}</h5>
       <p class="card-text fw-bolder">${playerStats[0].stats.kills}/${playerStats[0].stats.deaths}/${playerStats[0].stats.assists} <span class="fst-italic">${playerStats[0].stats.totalMinionsKilled + playerStats[0].stats.neutralMinionsKilled}</span></p>
-      <p class="card-text"><small class="text-muted">Time: ${time}</small></p>
+      <p class="card-text"><small class="text-muted">Time: ${formatTime(time)} <br> ${checkGameType(data.queueId)}</small></p>
       <div class="d-flex justify-content-between">
       <p class="card-text text-warning p-3">Gold: ${playerStats[0].stats.goldEarned}</p>
       <p class="card-text text-danger p-3">Damage: ${playerStats[0].stats.totalDamageDealtToChampions}</p>
@@ -140,6 +172,40 @@ const gameData = function (gameId) {
 
   output.addEventListener('click', e => {
     if (e.target.classList.contains('btn-light')) {
-      summonerGames(activeSummoner);
+      let game = ''
+      if (e.target.parentNode.childNodes[1].children[0].checked)
+        game = '&queue=420';
+      else if (e.target.parentNode.childNodes[3].children[0].checked) {
+        game = '&queue=400';
+      }
+      let champion = e.target.parentNode.childNodes[5].children[1].value 
+ 
+      console.log(champion);
+
+      summonerGames(activeSummoner, game, champion);
     }
   })
+
+
+  const checkGameType = function(game) {
+    switch(game) {
+      case game = 400:
+        return 'Normal Game'
+      break;
+      case game = 420:
+        return 'Ranked Game'
+    }
+  }
+
+  const formatTime = function(time) {
+    let formatedTime = `${time.toString().slice(0, 2)}:${time.toString().slice(2, 4)}`
+    return formatedTime;
+  }
+
+  const listChampions = function() {
+    let championList = ''
+      championArray.forEach(champion => {
+        championList += `<option value="champion=${champion.key}">${champion.name}</option>`
+      })
+    return championList;
+  }
