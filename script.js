@@ -1,4 +1,4 @@
-const riotKey = 'api_key=RGAPI-b221c3bd-c276-48d7-8aad-a96922f9d645';
+const riotKey = 'api_key=';
 const output = document.querySelector('#output');
 const form = document.querySelector('#sumSearch');
 const gamesOutput = document.querySelector('#gamesOutput');
