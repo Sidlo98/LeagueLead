@@ -1,6 +1,6 @@
-import riotKey from './riotkey.js'
+// import riotKey from './riotkey.js'
 
-// const riotKey = 'api_key=';
+const riotKey = '';
 const output = document.querySelector('#output');
 const form = document.querySelector('#sumSearch');
 const gamesOutput = document.querySelector('#gamesOutput');
@@ -21,7 +21,7 @@ const makeChampionsArray = function(data) {
 }
 
  const getSummoner = function(name) {
-   fetch(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/${name}?${riotKey()}`)
+   fetch(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/${name}?api_key=${riotKey}`)
    .then(response => {
       if(response.ok)
       {return response.json()}})
@@ -75,13 +75,13 @@ const makeChampionsArray = function(data) {
 
  const summonerGames = function (summoner, gameType = '', champion = '', amount = 10) { 
    gamesOutput.innerHTML = '';
-   fetch(`https://euw1.api.riotgames.com/lol/match/v4/matchlists/by-account/${summoner}?${champion}${gameType}&endIndex=${amount}&${riotKey()}`)
+   fetch(`https://euw1.api.riotgames.com/lol/match/v4/matchlists/by-account/${summoner}?${champion}${gameType}&endIndex=${amount}&api_key=${riotKey}`)
    .then(response => response.json())
    .then(data => {Object.values(data.matches).forEach(game => gameData(game.gameId))})
  }
 
 const gameData = function (gameId) {
-  fetch(`https://euw1.api.riotgames.com/lol/match/v4/matches/${gameId}?${riotKey()}`)
+  fetch(`https://euw1.api.riotgames.com/lol/match/v4/matches/${gameId}?api_key=${riotKey}`)
   .then(response => response.json())
   .then(data => displayGames(data))
 }
